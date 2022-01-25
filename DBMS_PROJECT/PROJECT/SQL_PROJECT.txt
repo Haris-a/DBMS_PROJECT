@@ -1,0 +1,503 @@
+create schema Disqus;
+
+create table users
+(
+ id int auto_increment
+ primary key,
+ name varchar(50) not null,
+ email varchar(100) not null,
+ password longtext not null,
+ token_id mediumtext not null,
+ location varchar(256) null,
+ profile_Url varchar(256) null,
+ status int default 0 not null,
+ is_admin int default 0 not null,
+ updated_at timestamp null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ constraint users_email_uindex
+ unique (email)
+);
+
+create table tags
+(
+ id int auto_increment
+ primary key,
+ tag_name varchar(30) not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ deleted_at timestamp null
+);
+
+create table reputation
+(
+ id int auto_increment
+ primary key,
+ user_id int not null,
+ description varchar(256) null,
+ value mediumint not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ constraint reputation_users__fk
+ foreign key (user_id) references users (id)
+ on update cascade on delete cascade
+);
+
+create table threads
+(
+ id int auto_increment
+ primary key,
+ title tinytext not null,
+ description longtext not null,
+ thread_user_id int not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ accepted_at timestamp null,
+ constraint user_id
+ foreign key (thread_user_id) references users (id)
+ on update cascade on delete cascade
+);
+
+create table edit_suggestion
+(
+ id int auto_increment
+ primary key,
+ thread_id int not null,
+ user_id int not null,
+ title tinytext not null,
+ description longtext not null,
+ is_approved int default 0 not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ approved_at timestamp null,
+ constraint edit_suggestion_threads__fk
+ foreign key (thread_id) references threads (id)
+ on update cascade on delete cascade,
+ constraint edit_suggestion_users__fk
+ foreign key (user_id) references users (id)
+ on update cascade on delete cascade
+);
+
+create table link
+(
+ id int auto_increment
+ primary key,
+ link_url varchar(256) not null,
+ thread_id int not null,
+ user_id int not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ constraint link_threads__fk
+ foreign key (thread_id) references threads (id)
+ on update cascade on delete cascade,
+ constraint link_users__fk
+ foreign key (user_id) references users (id)
+ on update cascade on delete cascade
+);
+
+create table thread_comments
+(
+ id int auto_increment
+ primary key,
+ thread_id int not null,
+ user_id int not null,
+ Context mediumtext not null,
+ sub_comment_id int null,
+ updated_at timestamp null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ constraint thread_comments_threads__fk
+ foreign key (thread_id) references threads (id)
+ on update cascade on delete cascade,
+ constraint thread_comments_users__fk
+ foreign key (user_id) references users (id)
+ on update cascade on delete cascade
+);
+
+create table user_thread_tag
+(
+ id int auto_increment
+ primary key,
+ tag_id int not null,
+ type varchar(50) not null,
+ type_id int not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ constraint user_thread_tag_tags__fk
+ foreign key (tag_id) references tags (id)
+ on update cascade on delete cascade,
+ constraint user_thread_tag_users__fk
+ foreign key (type_id) references users (id)
+ on update cascade on delete cascade,
+ constraint user_thread_tag_threads__fk
+ foreign key (type_id) references threads (id)
+ on update cascade on delete cascade
+);
+
+create table votes
+(
+ id int auto_increment
+ primary key,
+ upvote int null,
+ downvote int null,
+ user_id int not null,
+ thread_id int not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ constraint votes_threads__fk
+ foreign key (thread_id) references threads (id)
+ on update cascade on delete cascade,
+ constraint votes_users__fk
+ foreign key (user_id) references users (id)
+ on update cascade on delete cascade
+);
+
+create table notifications
+(
+ id int auto_increment
+ primary key,
+ title varchar(256) null,
+ description mediumtext not null,
+ type tinyint not null,
+ type_id int not null,
+ user_id int null,
+ is_seen char default '0' not null,
+ created_at timestamp default CURRENT_TIMESTAMP not null,
+ updated_at timestamp null,
+ constraint notifications_edit_suggest__fk
+ foreign key (type_id) references edit_suggestion (id)
+ on update cascade on delete cascade,
+ constraint notifications_repu__fk
+ foreign key (type_id) references reputation (id)
+ on update cascade on delete cascade,
+ constraint notifications_thread_comment__fk
+ foreign key (type_id) references thread_comments (id)
+ on update cascade on delete cascade,
+ constraint notifications_threads__fk
+ foreign key (type_id) references threads (id)
+ on update cascade on delete cascade,
+ constraint notifications_users__fk
+ foreign key (user_id) references users (id)
+ on update cascade on delete cascade,
+ constraint notifications_vote__fk
+ foreign key (type_id) references votes (id)
+ on update cascade on delete cascade
+);
+
+insert into disqus.tags (id, tag_name, created_at, updated_at, deleted_at)
+values (1, 'node', '2021-01-01 18:28:33', null, null),
+ (2, 'c++', '2021-01-01 18:28:33', null, null),
+ (3, 'cpp', '2021-01-01 18:28:33', null, null),
+ (4, 'console resources', '2021-01-01 18:28:33', null, null),
+ (5, 'error 520', '2021-01-01 18:28:33', null, null),
+ (6, 'error 404', '2021-01-01 18:28:33', null, null),
+ (7, 'Terminal Emulator', '2021-01-01 18:28:33', null, null),
+ (8, 'priority problem', '2021-01-01 18:28:33', null, null),
+ (9, 'react', '2021-01-01 18:28:33', null, null),
+ (10, 'kotlin', '2021-01-01 18:28:33', null, null),
+ (11, 'java', '2021-01-01 18:28:33', null, null),
+ (12, 'react native', '2021-01-01 18:28:33', null, null);
+
+SET FOREIGN_KEY_CHECKS=0;
+insert into disqus.reputation (id, user_id, description, value, created_at, 
+updated_at)
+values (1, 1, 'Trusted User', 30, '2021-01-02 11:12:28', null),
+ (2, 2, 'Established User', 11, '2021-01-02 11:12:28', null),
+ (3, 5, 'Access to Site Analytics', 100, '2021-01-02 11:12:28', null),
+ (4, 4, 'Unrestricted User', 70, '2021-01-02 11:12:28', null),
+ (5, 6, 'Trusted User', 30, '2021-01-02 11:12:28', null),
+ (6, 7, 'Established User', 11, '2021-01-02 11:12:28', null),
+ (7, 8, 'Access to Site Analytics', 100, '2021-01-02 11:12:28', null),
+ (8, 9, 'Unrestricted User', 70, '2021-01-02 11:12:28', null),
+ (9, 10, 'Access to Site Analytics', 100, '2021-01-02 11:12:28', 
+null),
+ (10, 3, 'Unrestricted User', 70, '2021-01-02 11:12:28', null);
+ 
+ 
+insert into disqus.thread_comments (id, thread_id, user_id, Context, 
+sub_comment_id, updated_at, created_at)
+values (1, 1, 3, 'You have to use cin.getline():', 0, null, '2021-01-02 
+11:03:07'), 
+(2, 1, 2, ' it happens. C++ isn''t exactly as intuitive as we would 
+like it to be.', 1, null, '2021-01-02 11:03:07'),
+ (3, 1, 4, 'It doesn''t "fail"; it just stops reading. It sees a 
+lexical token as a "string".', 0, null, '2021-01-02 11:03:07'),
+ (4, 2, 5, 'check your IP is enabled by mongodb atlas. you should give 
+access to your computer IP address from mongodb atlas. go to the network 
+access (left side bar) enter your IP or enter 0.0.0.0 to access all IP.', 0, 
+null, '2021-01-02 11:03:07'),
+ (5, 2, 1, 'Did you have this line in your app.js app.use(cors())?', 
+0, null, '2021-01-02 11:03:07'),
+ (6, 3, 5, 'I think you are using chrome. The problem is the 
+certificate mismatch or the expiration of the certificate.Check your 
+certificate properly.', 0, null, '2021-01-02 11:03:07'),
+ (7, 3, 4, 'but i am getting this error on Mozilla also. What you 
+think its just a browser isuue?', 6, null, '2021-01-02 11:03:07'),
+ (8, 3, 5, 'its because of the certificate mismatch as i said', 7, 
+null, '2021-01-02 11:03:07'),
+ (9, 4, 1, 'As quoted from CloudFlare''s Documentation:', 0, null, 
+'2021-01-02 11:07:22'),
+ (10, 5, 4, 'The 404 code means that the server was unable to locate 
+the files you were looking for via GET request.', 0, null, '2021-01-02 
+11:07:22'),
+ (11, 5, 5, 'just wondering what you mean by adding google maps api in 
+tags? Has he not done that already?', 10, null, '2021-01-02 11:07:22'),
+ (12, 5, 4, 'I made a mistake and mixed 1) and 2) in my rush to answer 
+the question. He does use the script tags, but he forgot to include the 
+text/javascript type.', 11, null, '2021-01-02 11:07:22');
+
+insert into disqus.thread_comments (id, thread_id, user_id, Context, 
+sub_comment_id, updated_at, created_at)
+values (14, 6, 2, 'It solved my problem. Thank you so much.', 13, null, 
+'2021-01-02 11:08:51');
+
+insert into disqus.threads (id, title, description, thread_user_id, 
+created_at, updated_at, accepted_at)
+values (1, 'Input string in c++ with spaces', 'The user wants to enter 
+"Hello World". But cin fails at the space between the two words. How can I 
+make cin take in the whole of Hello World? I''m actually doing this with 
+structs and cin.getline doesn''t seem to work. My code yields an error. Any 
+ideas?', 1, '2021-01-01 18:10:06', null, null);
+insert into disqus.threads (id, title, description, thread_user_id, 
+created_at, updated_at, accepted_at)
+values (2, 'Unable to connect to mongodb atlas with mongoose', 'I need 
+help!!! I tried connecting to mongodb atlas with my connection string but 
+I''m unable to. I''m not sure how to proceed. i have a barebones application. 
+I''m getting a connection error (a mongooseServerSelectionError) and an 
+unhandled Promise Rejection Warning.', 2, '2021-01-01 18:10:06', null, null);
+insert into disqus.threads (id, title, description, thread_user_id, 
+created_at, updated_at, accepted_at)
+values (3, 'Getting error in console : Failed to load resource', 'I have 
+refresh my application page and getting this error in console Failed to load 
+resource: net::ERR_CONNECTION_RESET.', 4, '2021-01-01 18:10:06', null, null);
+insert into disqus.threads (id, title, description, thread_user_id, created_at, updated_at, accepted_at)
+values (4, 'Some files returning Error 520', 'Some of my files in my web 
+server is returning Error 520: Web server is returning an unknown error. As 
+far as I know, the files returning the errors are index.php and 
+google0f3d9b***.html (used to verify Google Webmaster Console).', 5, '2021-01-01 18:10::06', null, null);
+insert into disqus.threads (id, title, description, thread_user_id, created_at, updated_at, accepted_at)
+values (5, 'What is meaning of error 404 (Not Found)', 'I have created a 
+small web site, where I am showing some data, which I get from an API (JSON 
+data type). In my console I am getting these two errors:', 5, '2021-01-01 
+18:10:06', null, null),(6, 'How To Solve NodeJS Method Priority Problem', 'In this case, 
+method 3 works first and i am getting error. Its priority has to be like 
+method 1, method 2, and method 3. Are these methods promises ? And promises 
+work as asynchronous.', 2, '2021-01-01 18:10:06', null, null),
+ (7, 'Failed to launch preferred application for category 
+TerminalEmulator. Could not find fallback TerminalEmulator application', 'I 
+see others have the the issue and see some resolution. And my questions is 
+where to I run that install command from if I can''t get to terminal to run 
+it? Thanks', 4, '2021-01-01 18:13:52', null, null),
+ (8, 'Where is the error in the react?', 'I built the file using 
+commands: browserify -t reactify js/app.js -o js/build.js When starting in 
+the browser, an error occurs: build.js:196 Uncaught TypeError: React.render 
+is not a function at Object.2.react (build.js:196) at s (build.js:1) at e 
+(build.js:1) at build.js:1', 6, '2021-01-01 18:10:06', null, null),
+ (9, 'How to avoid StackOverFlow error in Java/Kotlin/IntelliJ IDEA?', 
+'I want to do a factorial of a BigInteger (in Kotlin). With a tail recursion 
+I get StackOverFlow error when I try to do 9000! . With a non-recursive 
+function I can do that ... but I am very curious how to avoid this kind of 
+error.', 7, '2021-01-01 18:10:06', null, null),
+ (10, 'How to use My Fragment TextViews and button from my Activity?', 
+'I have asked similar questions here before How to make my Fragment make use 
+of my Activity Data? and How to send data from Activity to Fragment?(Android) 
+But it seems that most people did not quite understand what I mean, so let me 
+explain better. Suppose I have a Textview and a button.', 9, '2021-01-01 
+18:10:06', null, null),
+ (11, 'Will Expo notifications work after project is built?', 'I am 
+building a React Native app with Expo, and I am using Expo Notifications. If 
+I go to build this app on iOS and Android, will Expo Notifications still work 
+on the built app? Or is this something that only works so long as the app 
+runs on Expo?', 8, '2021-01-01 18:10:06', null, null);
+
+
+insert into disqus.user_thread_tag (id, tag_id, type, type_id, created_at, 
+updated_at)
+values (1, 1, 'User', 1, '2021-01-02 10:55:45', null),
+ (2, 2, 'User', 1, '2021-01-02 10:55:45', null),
+ (3, 3, 'User', 1, '2021-01-02 10:55:45', null),
+ (4, 4, 'Thread', 2, '2021-01-02 10:55:45', null),
+ (5, 5, 'Thread', 2, '2021-01-02 10:55:45', null),
+ (6, 6, 'Thread', 2, '2021-01-02 10:55:45', null),
+ (7, 7, 'Thread', 2, '2021-01-02 10:55:45', null),
+ (8, 8, 'Thread', 2, '2021-01-02 10:55:45', null),
+ (9, 1, 'User', 1, '2021-01-02 10:55:45', null),
+ (10, 2, 'Thread', 2, '2021-01-02 10:55:45', null),
+ (11, 3, 'User', 1, '2021-01-02 10:55:45', null),
+ (12, 4, 'Thread', 2, '2021-01-02 10:55:45', null);
+
+insert into disqus.users (id, name, email, password, token_id, location, 
+profile_Url, status, is_admin, updated_at, created_at)
+values (1, 'Saqib Rasheed', 'msaqib@gmail.com', 
+'$2y$10$c3SwLIb60ywA6MouTH50wexYfYCo.WtZLbqDC1e2zR816MiiRHTuO', '1', 
+'Islamabad', 'saqibrasheed', 1, 0, null, '2021-01-01 17:43:49'),
+ (2, 'Muhammad Ahmad', 'ahmad@gmail.com', 
+'$2y$10$lGgMaf0gJwztcev7uF/Vm.7IP0hT4f1cD7X7kOruWFHdZbEfd0JMa', '2', 
+'Faisalabad', 'ahmad62', 1, 0, null, '2021-01-02 17:43:49'),
+ (3, 'Shehryar Amin', 'sharry@gmail.com', 
+'$2y$10$JThm6hmw6/SzfRhGvWiB1eCltcMA8lJPsa1H/zfbvykWvQWwGrLPS', '3', 
+'Gujrat', 'sharry', 1, 1, null, '2021-01-01 17:43:49'),
+ (4, 'Abdul Baari', 'baari@gmail.com', 
+'$2y$10$opjhG4K4dnFNHtAK20W48uaUpAKVI4qL9GJym4fxWHS8kwqeZ3P.2', '4', 
+'Vehari', 'baari', 1, 0, null, '2021-01-01 17:46:09'),
+ (5, 'Hammad Mukhtar', 'hammad@gmail.com', 
+'$2y$10$V8DPOquMiMfubemsWxsUXetsDmgiWMJlMkpXzdY1GUjVNUNjdVr1q', '5', 
+'Multan', 'hammad', 0, 0, null, '2021-01-01 17:46:09'),
+ (6, 'Angela Yu', 'angela@gmail.com', 
+'$2y$10$c3SwLIb60ywA6MouTH50wexYfYCo.WtZLbqDC1e2zR816MiiRHTuO', '1', 
+'London', 'angela', 1, 0, null, '2021-01-01 17:43:49'),
+ (7, 'Maxmilian', 'maxmil@gmail.com', 
+'$2y$10$lGgMaf0gJwztcev7uF/Vm.7IP0hT4f1cD7X7kOruWFHdZbEfd0JMa', '2', 
+'Berlen', 'max69', 1, 0, null, '2021-01-02 17:43:49'),
+ (8, 'Shuwarz Muller', 'shuwarz@gmail.com', 
+'$2y$10$JThm6hmw6/SzfRhGvWiB1eCltcMA8lJPsa1H/zfbvykWvQWwGrLPS', '3', 
+'Manila', 'shuwarz', 1, 0, null, '2021-01-01 17:43:49'),
+ (9, 'Steven Wolfe', 'steve@gmail.com', 
+'$2y$10$opjhG4K4dnFNHtAK20W48uaUpAKVI4qL9GJym4fxWHS8kwqeZ3P.2', '4', 'New 
+York', 'steve', 1, 1, null, '2021-01-01 17:46:09'),
+ (10, 'Usama Shoukat', 'kitkat@gmail.com', 
+'$2y$10$V8DPOquMiMfubemsWxsUXetsDmgiWMJlMkpXzdY1GUjVNUNjdVr1q', '5', 'Jhang', 
+'kitkat', 0, 0, null, '2021-01-01 17:46:09');
+
+insert into disqus.votes (id, upvote, downvote, user_id, thread_id, 
+created_at, updated_at)
+values (1, 123, 3, 1, 2, '2021-01-01 18:18:52', null),
+ (2, 1102, 67, 2, 3, '2021-01-01 18:18:52', null),
+ (3, 328, 4, 3, 4, '2021-01-01 18:18:52', null),
+ (4, 3433, 56, 4, 5, '2021-01-01 18:18:52', null),
+ (5, 267, 32, 4, 6, '2021-01-01 18:18:52', null),
+ (6, 133, 13, 6, 2, '2021-01-01 18:18:52', null),
+ (7, 1202, 27, 7, 3, '2021-01-01 18:18:52', null),
+ (8, 358, 35, 3, 8, '2021-01-01 18:18:52', null),
+ (9, 3833, 66, 4, 9, '2021-01-01 18:18:52', null),
+ (10, 67, 72, 4, 6, '2021-01-01 18:18:52', null);
+
+insert into disqus.edit_suggestion (id, thread_id, user_id, title, 
+description, is_approved, created_at, updated_at, approved_at)
+values (1, 2, 2, 'Unable to connect to mongodb atlas with mongoose', 'I need 
+help!!! I tried connecting to mongodb atlas with my connection string but 
+I''m unable to. I''m not sure how to proceed. i have a barebones application. 
+I''m getting a connection error (a mongooseServerSelectionError) and an 
+unhandled Promise Rejection Warning.', 0, '2021-01-02 11:27:17', null, null),
+ (2, 3, 4, 'Console errors. Failed to load resource: 
+net::ERR_INSECURE_RESPONSE', 'I have refresh my application page and getting 
+this error in console Failed to load resource: net::ERR_CONNECTION_RESET.', 
+0, '2021-01-02 11:27:17', null, null);
+
+insert into disqus.notifications (id, title, description, type, type_id, 
+user_id, is_seen, created_at, updated_at)
+values (1, 'New Comment on your thread!', 'Muhammad Ahmad commented on your 
+thread!', 1, 2, 9, '0', '2021-01-13 00:07:30', null),
+ (2, 'New reply to your thread!', 'Muhammad Ahmad replied to your 
+comment on Saqib Rasheed''s thread.', 2, 1, 2, '0', '2021-01-13 
+00:07:30', null),
+ (3, 'New Comment on your thread!', 'Steve Wolf commented on your 
+thread!', 3, 2, 1, '0', '2021-01-13 00:07:30', null),
+ (4, 'New reply to your thread!', 'Shehryar Amin replied to your 
+comment on Muhammad Ahmad''s thread.', 4, 1, 2, '0', '2021-01-13 
+00:07:30', null),
+ (5, 'New Comment on your thread!', 'Angela Yu commented on your 
+thread!', 5, 2, 4, '0', '2021-01-13 00:07:30', null),
+ (6, 'New reply to your thread!', 'Maxmilian replied to your comment 
+on Shuwarz Muller''s thread.', 6, 1, 9, '0', '2021-01-13 00:07:30', 
+null),
+ (7, 'New Comment on your thread!', 'Usama Shoukat commented on your 
+thread!', 7, 2, 5, '0', '2021-01-13 00:07:30', null),
+ (8, 'New reply to your thread!', 'Shehryar Amin replied to your 
+comment on Angela Yu''s thread.', 8, 1, 10, '0', '2021-01-13 00:07:30', 
+null),
+ (9, 'New Comment on your thread!', 'Abdul Baari commented on your 
+thread!', 9, 2, 6, '0', '2021-01-13 00:07:30', null),
+ (10, 'New reply to your thread!', 'Saqib Rasheed replied to your 
+comment on Hammad Mukhatar''s thread.', 10, 1, 7, '0', '2021-01-13 
+00:07:30', null);
+
+select users.name,
+ users.email,
+ users.location,
+ r.value as 'Reputation',
+ r.description
+from users
+ join reputation r on users.id = r.user_id
+order by r.value DESC;
+
+select t.title,
+ t.description,
+ v.upvote,
+ v.downvote
+from threads t
+ join votes v on t.id = v.thread_id
+where upvote in (SELECT max(upvote) from votes);
+
+select u.name,
+ u.email,
+ u.location,
+ count(user_id) as 'Total Accepted Answers'
+from users u
+ join thread_comments tc on u.id = tc.user_id
+group by user_id
+order by count(user_id) DESC;
+
+select t.title, t.description
+from threads t
+ left join thread_comments tc on t.id = tc.thread_id
+where tc.thread_id IS NULL; 
+
+select title, description
+from threads
+where id NOT IN (SELECT thread_id from thread_comments);
+
+select u.name,
+ u.email,
+ count(thread_user_id) as 'Total Asked Question',
+ t.title,
+ t.description
+from users u
+ join threads t on u.id = t.thread_user_id
+group by t.thread_user_id
+order by count(thread_user_id) DESC;
+
+select u.name,
+ u.email,
+ u.location,
+ count(user_id) as 'Total Answers'
+from users u
+ join thread_comments tc on u.id = tc.user_id
+group by user_id
+order by count(user_id) DESC;
+
+select tag_name,
+ count(tag_id) as 'Total Threads'
+from tags
+ join user_thread_tag utt on tags.id = utt.tag_id
+ join threads t on utt.type_id = t.id
+where type_id = 2 && type = 'Thread'
+group by tag_id
+order by count(tag_id) DESC;
+
+select t.title,
+ t.description,
+ v.upvote,
+ v.downvote
+from threads t
+ join votes v on t.id = v.thread_id
+where downvote IN (SELECT max(downvote) from votes);
+
+select u.name as 'Admin Name',
+ u.email as 'Admin Email',
+ count(thread_id) as 'No.of Edits'
+from threads t
+ join edit_suggestion es on t.id = es.thread_id
+ join users u on es.user_id = u.id
+group by u.id
+order by count(thread_id) DESC;
+
+select es.title as 'Sugg. Title',
+ es.description as 'Sugg. Description',
+ count(thread_id) as 'No.of Edits',
+ t.id as 'Thread ID',
+ u.name as 'Admin Name',
+ u.email as 'Admin Email'
+from threads t
+ join edit_suggestion es on t.id = es.thread_id
+ join users u on es.user_id = u.id
+group by thread_id, u.id, es.title, es.description
+order by count(thread_id) DESC;
